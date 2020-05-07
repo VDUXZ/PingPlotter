@@ -31,6 +31,7 @@ namespace PingPlotter
 
         public f1()
         {
+            //This gets called when you Run(the form)
             InitializeTimer();
         }
     }
