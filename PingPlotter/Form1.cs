@@ -51,7 +51,7 @@ namespace PingPlotter
             for (int i = 0; i < count; i++)
             {
                 // check to see if time label should be written
-                if (times[i].Substring(6,7) == "00")
+                if (times[i].Substring(6,2) == "00")
                 {
                     Debug.WriteLine("time: " + times[i]);
                 }
