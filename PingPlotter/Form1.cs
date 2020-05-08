@@ -35,13 +35,13 @@ namespace PingPlotter
 
             // Defines pen 
             Pen pen = new Pen(ForeColor);
-            Pen redPen = new Pen(Color.Red, 1);
+            Pen redPen = new Pen(Color.Red, 2);
             Pen bluePen = new Pen(Color.Blue, 2);
             Pen greenPen = new Pen(Color.Green, 3);
             Pen blackPen = new Pen(Color.Black, 4);
             Graphics g = pea.Graphics;
             int X1, X2, Y1, Y2;
-            g.DrawString("Latency "+ count, new Font("Verdana", 20), new SolidBrush(Color.Tomato), 20, 10);
+            g.DrawString("Latency", new Font("Verdana", 20), new SolidBrush(Color.Tomato), 20, 10);
 
             // Draw chart boundaries
             pea.Graphics.DrawLine(blackPen, 40, 250, 900, 250);
@@ -52,6 +52,7 @@ namespace PingPlotter
             for (int i = 0; i < count; i++)
             {
                 // check to see if time label should be written
+
                 if (times[i].Substring(7,1) == "0")
                 {
                     GraphicsState state = g.Save();
@@ -65,10 +66,10 @@ namespace PingPlotter
                 if (latency[i] == -1)
                 {
                     // pings failed, network destination unreachable
-                    X1 = 10 + i * 3;
+                    X1 = 42 + i * 3;
                     Y1 = 250;
                     X2 = X1;
-                    Y2 = 100;
+                    Y2 = 50;
                     pea.Graphics.DrawLine(redPen, X1, Y1, X2, Y2);
                 }
                 else
@@ -110,7 +111,7 @@ namespace PingPlotter
                     {
                         result = reader.ReadToEnd();
                     }
-                    bool success = result.Contains("Destination host unreachable.");
+                    bool success = result.Contains("(100% loss)");
                     if (success) return -1;
                     int position1 = result.IndexOf("(");
                     string buf = result.Substring(position1 + 1);
