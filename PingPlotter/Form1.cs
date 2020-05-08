@@ -9,6 +9,7 @@ using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 using System.IO;
+using System.Drawing.Drawing2D;
 
 namespace PingPlotter
 {
@@ -51,9 +52,14 @@ namespace PingPlotter
             for (int i = 0; i < count; i++)
             {
                 // check to see if time label should be written
-                if (times[i].Substring(6,7) == "00")
+                if (times[i].Substring(7,1) == "0")
                 {
-                    Debug.WriteLine("time: " + times[i]);
+                    GraphicsState state = g.Save();
+                    g.ResetTransform();
+                    g.RotateTransform(270.0F);
+                    g.TranslateTransform(35 + i * 3, 320, MatrixOrder.Append);
+                    g.DrawString(times[i], new Font("Verdana", 10), new SolidBrush(Color.Black), 0, 0);
+                    g.Restore(state);
                 }
 
                 if (latency[i] == -1)
@@ -91,7 +97,7 @@ namespace PingPlotter
                 string result;
                 int average;
                 int packetLoss;
-                const string hostname = "-n 2 8.8.8.8";
+                const string hostname = "-n 1 -w 600 8.8.8.8";
                 ProcessStartInfo start = new ProcessStartInfo();
                 start.FileName = "C:\\Windows\\System32\\PING.EXE";
                 start.UseShellExecute = false;
@@ -103,7 +109,6 @@ namespace PingPlotter
                     using (StreamReader reader = process.StandardOutput)
                     {
                         result = reader.ReadToEnd();
-                        //Console.Write(result);
                     }
                     bool success = result.Contains("Destination host unreachable.");
                     if (success) return -1;
@@ -112,31 +117,28 @@ namespace PingPlotter
                     position1 = buf.IndexOf("%");
                     string buf2 = buf.Substring(0, position1);
                     packetLoss = int.Parse(buf2);
-                    //Console.WriteLine("packet loss = " + packetLoss);
 
                     position1 = buf.LastIndexOf("A");
                     buf2 = buf.Substring(position1 + 9);
                     position1 = buf2.IndexOf("m");
                     buf = buf2.Substring(0, position1);
                     average = int.Parse(buf);
-                    //Console.WriteLine("Average = " + average);
                 }
                 return average;
             }
  
         private void TimerTick(object sender, EventArgs e)
         {
-            Debug.WriteLine(time);
             time++;
             
 
             average = SendPing();
             latency[count] = average;
             times[count] = DateTime.Now.ToString("hh:mm:ss");
-
+            Debug.WriteLine(count + " " + times[count] + " " + latency[count]);
             count++;
             if (count >= 500) count = 0;
-            DrawChart();
+            //DrawChart();
             this.Refresh();
 
         }
