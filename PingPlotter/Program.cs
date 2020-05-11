@@ -22,7 +22,7 @@ namespace PingPlotter
                 FormBorderStyle = FormBorderStyle.FixedSingle
             };
 
-            System.Drawing.Rectangle wSize = new Rectangle(0, 0, 1000, 400);
+            System.Drawing.Rectangle wSize = new Rectangle(0, 0, 1560, 500);
 
             f.Bounds = wSize;
             f.TopMost = true;

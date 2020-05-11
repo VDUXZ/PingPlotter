@@ -15,13 +15,17 @@ namespace PingPlotter
 {
     public partial class f1 : Form
     {
-        Timer timer = new Timer();
-        int time = 0;
-        int[] latency = new int[500];
-        string[] times = new string[500];
-        int count = 0;
+        int maxSamples = 300; // maximum number of samples in ring buffer
+        int mostRecent = 0; // pointer to last value in ring buffer
+        Timer timer = new Timer(); // set up event to ping every second
+        int time = 0; // counter for number of pings
+        int[] latency = new int[500]; // ring buffer space for latency values
+        string[] times = new string[500]; // ring buffer storage for time strings
+        int count = 0; // number of samples in the ring buffer
         int average = 0;
-        //Graphics g = f1.Graphics;
+        int xsize = 0;  // store the size of the graph horizontally
+        int ysize = 500; // store vertical size of graph window
+
 
         private void InitializeTimer()
         {
@@ -40,30 +44,44 @@ namespace PingPlotter
             Pen greenPen = new Pen(Color.Green, 3);
             Pen blackPen = new Pen(Color.Black, 4);
             Graphics g = pea.Graphics;
-            int X1, X2, Y1, Y2;
+            int X1, X2, Y1, Y2; // variables for plotting lines on graph
+            int currentSample; // variable for iterating through ring buffer
+            xsize = 100 + maxSamples * 3;
             g.DrawString("Latency", new Font("Verdana", 20), new SolidBrush(Color.Tomato), 20, 10);
 
             // Draw chart boundaries
-            pea.Graphics.DrawLine(blackPen, 40, 250, 900, 250);
+            pea.Graphics.DrawLine(blackPen, 40, 250, 43+maxSamples*3, 250);
             pea.Graphics.DrawLine(blackPen, 40, 40, 40, 250);
-            pea.Graphics.DrawLine(blackPen, 900, 40, 900, 250);
+            pea.Graphics.DrawLine(blackPen, 43+maxSamples*3, 40, 43+maxSamples*3, 250);
 
-            
+            currentSample = mostRecent; // set starting point in ringbuffer
+            Debug.WriteLine("currentSample=" + currentSample + " mostRecent=" + mostRecent);
             for (int i = 0; i < count; i++)
             {
+                if (currentSample >= count)
+                {
+                    currentSample = 0; // roll ring buffer
+                    Debug.WriteLine("rolling currentSample");
+                }
+                //Debug.WriteLine("i=" + i + " currentSample=" + currentSample);
                 // check to see if time label should be written
 
-                if (times[i].Substring(7,1) == "0")
+                if (times[currentSample] == null)
+                {
+                    Debug.WriteLine("time is null.  currentSample=" + currentSample + " i=" + i + " count=" + count);
+                    return;
+                }
+                if (times[currentSample].Substring(7,1) == "0")
                 {
                     GraphicsState state = g.Save();
                     g.ResetTransform();
                     g.RotateTransform(270.0F);
                     g.TranslateTransform(35 + i * 3, 320, MatrixOrder.Append);
-                    g.DrawString(times[i], new Font("Verdana", 10), new SolidBrush(Color.Black), 0, 0);
+                    g.DrawString(times[currentSample], new Font("Verdana", 10), new SolidBrush(Color.Black), 0, 0);
                     g.Restore(state);
                 }
 
-                if (latency[i] == -1)
+                if (latency[currentSample] == -1)
                 {
                     // pings failed, network destination unreachable
                     X1 = 42 + i * 3;
@@ -78,9 +96,10 @@ namespace PingPlotter
                     X1 = 42 + i * 3;
                     Y1 = 250;
                     X2 = X1;
-                    Y2 = Y1 - latency[i] * 2;
+                    Y2 = Y1 - latency[currentSample] * 2;
                     pea.Graphics.DrawLine(bluePen, X1, Y1, X2, Y2);
                 }
+                currentSample++;
             }
             
 
@@ -132,13 +151,20 @@ namespace PingPlotter
         {
             time++;
             
+            // perform ring buffer logic
+            if ((count >= maxSamples)&&(mostRecent == count))
+            {
+                mostRecent = 0; // reset the ring buffer
+                Debug.WriteLine("reset ring Buffer. count=" + count + " mostRecent=" + mostRecent);
+            }
 
             average = SendPing();
-            latency[count] = average;
-            times[count] = DateTime.Now.ToString("hh:mm:ss");
-            Debug.WriteLine(count + " " + times[count] + " " + latency[count]);
-            count++;
-            if (count >= 500) count = 0;
+            latency[mostRecent] = average;
+            times[mostRecent] = DateTime.Now.ToString("hh:mm:ss");
+            Debug.WriteLine(mostRecent + " " + times[mostRecent] + " " + latency[mostRecent]);
+            if (count < maxSamples) count++;
+            mostRecent++;
+     
             //DrawChart();
             this.Refresh();
 
